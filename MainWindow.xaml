@@ -5,13 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CSVReader"
         mc:Ignorable="d"
-        Title="MainWindow" Height="500" Width="700">
+        Title="MainWindow" Height="500" Width="400" MinHeight="500" MinWidth="400">
     <Grid>
         <StackPanel Margin="0,0,0,165" Height="320">
             <DataGrid x:Name="MainDataGrid" Height="320"/>
         </StackPanel>
         <Grid Margin="0,320,0,0">
-            <Button Content="Load CSV" HorizontalAlignment="Left" Margin="555,0,0,0" VerticalAlignment="Center" Height="50" Width="100" Click="Load_Button_Click"/>
+            <Button Content="Load CSV" HorizontalAlignment="Right" Margin="0,0,45,0" VerticalAlignment="Center" Height="50" Width="100" Click="Load_Button_Click"/>
             <Button Content="Save CSV" HorizontalAlignment="Left" Margin="45,0,0,0" VerticalAlignment="Center" Height="50" Width="100" Click="Save_Button_Click"/>
         </Grid>
     </Grid>

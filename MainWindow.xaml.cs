@@ -33,14 +33,22 @@ namespace CSVReader
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Filter = "Cursor Files|*.csv";
             dialog.Title = "Выберите файл в формате .csv";
-            dialog.ShowDialog();
-
-            MainDataGrid.ItemsSource = ReadFromCSV(dialog.FileName).DefaultView;
+            if(dialog.ShowDialog() == true)
+            {
+                MainDataGrid.ItemsSource = ReadFromCSV(dialog.FileName).DefaultView;
+            }
+            MessageBox.Show($"File \"{dialog.FileName}\" loaded successfully.");
         }
 
         private void Save_Button_Click(object sender, RoutedEventArgs e)
         {
-
+            SaveFileDialog dialog = new SaveFileDialog();
+            dialog.Filter = "Cursor Files|*.csv";
+            if (dialog.ShowDialog() == true)
+            {
+                SaveToCSV(dialog.FileName);
+            }
+            MessageBox.Show($"File \"{dialog.FileName}\" saved successfully.");
         }
 
         private DataTable ReadFromCSV(string filePath)
@@ -71,9 +79,44 @@ namespace CSVReader
             return dt;
         }
 
-        private void SaveToCSV()
+        private void SaveToCSV(string fileName)
         {
-
+            string temp = "";         
+            DataView dv = new DataView();
+            using (StreamWriter sw = new StreamWriter(fileName))
+            {
+                if (MainDataGrid.Columns.Count > 0)
+                {
+                    for (int i = 0; i <= MainDataGrid.Columns.Count - 1; i++)
+                    {
+                        if (i > 0)
+                        {
+                            sw.Write(',');
+                        }
+                        sw.Write(MainDataGrid.Columns[i].Header);
+                    }
+                    sw.WriteLine();
+                    dv = (DataView)MainDataGrid.Items.SourceCollection;
+                    for (int j = 0; j <= MainDataGrid.Columns.Count - 1; j++)
+                    {
+                        if (j > 0)
+                        {
+                            sw.WriteLine();
+                        }
+                        for (int i = 0; i <= MainDataGrid.Columns.Count - 1; i++)
+                        {
+                            if (i > 0)
+                            {
+                                sw.Write(",");
+                            }
+                            temp = dv.Table.Rows[j].ItemArray[i].ToString();
+                            temp = temp.Replace(',', ' ');
+                            temp = temp.Replace(Environment.NewLine, " ");
+                            sw.Write(temp);
+                        }
+                    }
+                }
+            }            
         }
     }
 }
