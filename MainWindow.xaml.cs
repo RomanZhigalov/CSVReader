@@ -15,6 +15,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Microsoft.Win32;
 using System.Data;
+using System.Configuration;
+using System.Data.SqlClient;
 
 namespace CSVReader
 {
@@ -23,9 +25,17 @@ namespace CSVReader
     /// </summary>
     public partial class MainWindow : Window
     {
+        private char splitter;
+        private string connection;
+        private SqlDataAdapter adapter;
+        private DataTable mainDT;
+
         public MainWindow()
         {
             InitializeComponent();
+            splitter = ',';
+            mainDT = new DataTable();
+            connection = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
         }
 
         private void Load_Button_Click(object sender, RoutedEventArgs e)
@@ -35,88 +45,114 @@ namespace CSVReader
             dialog.Title = "Выберите файл в формате .csv";
             if(dialog.ShowDialog() == true)
             {
-                MainDataGrid.ItemsSource = ReadFromCSV(dialog.FileName).DefaultView;
+                MainDataGrid.Columns.Clear();
+                MainDataGrid.ItemsSource = null;
+                ReadFromCSV(dialog.FileName, mainDT); 
+                MainDataGrid.ItemsSource = mainDT.DefaultView;
             }
-            MessageBox.Show($"File \"{dialog.FileName}\" loaded successfully.");
+            if(dialog.FileName.Length != 0)
+            {
+                MessageBox.Show($"File \"{dialog.FileName}\" loaded successfully.");
+            }
         }
 
         private void Save_Button_Click(object sender, RoutedEventArgs e)
         {
+            if(MainDataGrid.Columns.Count <= 0)
+            {
+                MessageBox.Show("There is no data to export.");
+                return;
+            }
             SaveFileDialog dialog = new SaveFileDialog();
             dialog.Filter = "Cursor Files|*.csv";
             if (dialog.ShowDialog() == true)
             {
-                SaveToCSV(dialog.FileName);
+                WriteToCSV(dialog.FileName, mainDT);
             }
             MessageBox.Show($"File \"{dialog.FileName}\" saved successfully.");
         }
 
-        private DataTable ReadFromCSV(string filePath)
+        private void ReadFromCSV(string filePath, DataTable dt)
         {
-            DataTable dt = new DataTable();
-            if (filePath != null)
+            if (filePath.Length != 0)
             {
-                using (StreamReader sr = new StreamReader(filePath))
+                using (StreamReader sr = new StreamReader(filePath, Encoding.Default))
                 {
-                    string[] headers = sr.ReadLine().Split(',');
-
-                    foreach (string header in headers)
+                    try
                     {
-                        dt.Columns.Add(header);
-                    }
-                    while (!sr.EndOfStream)
-                    {
-                        string[] rows = sr.ReadLine().Split(',');
-                        DataRow dr = dt.NewRow();
-                        for (int i = 0; i < headers.Length; i++)
+                        dt.Clear();
+                        string[] headers = sr.ReadLine().Split(splitter);
+                        foreach (string header in headers)
                         {
-                            dr[i] = rows[i];
+                            dt.Columns.Add(header);
                         }
-                        dt.Rows.Add(dr);
+                        while (!sr.EndOfStream)
+                        {
+                            string[] rows = sr.ReadLine().Split(splitter);
+                            DataRow dr = dt.NewRow();
+                            for (int i = 0; i < headers.Length; i++)
+                            {
+                                dr[i] = rows[i];
+                            }
+                            dt.Rows.Add(dr);
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        MessageBox.Show(ex.GetType().ToString());
                     }
                 }
             }
-            return dt;
         }
 
-        private void SaveToCSV(string fileName)
+        private void WriteToCSV(string fileName, DataTable dt)
         {
-            string temp = "";         
-            DataView dv = new DataView();
+            string temp = "";    
+            //DataView dv = (DataView)MainDataGrid.Items.SourceCollection;
             using (StreamWriter sw = new StreamWriter(fileName))
             {
-                if (MainDataGrid.Columns.Count > 0)
+                if (dt.Columns.Count > 0)
                 {
-                    for (int i = 0; i <= MainDataGrid.Columns.Count - 1; i++)
+                    for (int column = 0; column <= dt.Columns.Count - 1; column++)
                     {
-                        if (i > 0)
+                        if (column > 0)
                         {
-                            sw.Write(',');
+                            sw.Write(splitter);
                         }
-                        sw.Write(MainDataGrid.Columns[i].Header);
+                        sw.Write(dt.Columns[column].ColumnName);
                     }
                     sw.WriteLine();
-                    dv = (DataView)MainDataGrid.Items.SourceCollection;
-                    for (int j = 0; j <= MainDataGrid.Columns.Count - 1; j++)
+                    for (int row = 0; row <= dt.Rows.Count - 1; row++)
                     {
-                        if (j > 0)
+                        if (row > 0)
                         {
                             sw.WriteLine();
                         }
-                        for (int i = 0; i <= MainDataGrid.Columns.Count - 1; i++)
+                        for (int column = 0; column <= dt.Columns.Count - 1; column++)
                         {
-                            if (i > 0)
+                            if (column > 0)
                             {
-                                sw.Write(",");
+                                sw.Write(splitter);
                             }
-                            temp = dv.Table.Rows[j].ItemArray[i].ToString();
-                            temp = temp.Replace(',', ' ');
+                            temp = dt.Rows[row].ItemArray[column].ToString();
+                            temp = temp.Replace(splitter, ' ');
                             temp = temp.Replace(Environment.NewLine, " ");
                             sw.Write(temp);
                         }
                     }
                 }
             }            
+        }
+
+        private void DataTableToDB()
+        {
+
+        }
+
+        private void Clear_Button_Click(object sender, RoutedEventArgs e)
+        {
+            MainDataGrid.Columns.Clear();
+            MainDataGrid.ItemsSource = null;
         }
     }
 }
