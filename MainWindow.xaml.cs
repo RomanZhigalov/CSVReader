@@ -28,13 +28,12 @@ namespace CSVReader
         private char splitter;
         private string connection;
         private SqlDataAdapter adapter;
-        private DataTable mainDT;
+        DataSet ds = new DataSet();
 
         public MainWindow()
         {
             InitializeComponent();
             splitter = ',';
-            mainDT = new DataTable();
             connection = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
         }
 
@@ -45,15 +44,22 @@ namespace CSVReader
             dialog.Title = "Выберите файл в формате .csv";
             if(dialog.ShowDialog() == true)
             {
-                MainDataGrid.Columns.Clear();
-                MainDataGrid.ItemsSource = null;
-                ReadFromCSV(dialog.FileName, mainDT); 
-                MainDataGrid.ItemsSource = mainDT.DefaultView;
+                DataTable dt = new DataTable();
+                ds.Tables.Clear();
+                ds.Tables.Add(dt);
+                ReadFromCSV(dialog.FileName, dt);
+                if (dt.Columns.Count != 0)
+                {
+                    MainDataGrid.ItemsSource = ds.Tables[0].DefaultView;
+                    MessageBox.Show($"File \"{dialog.FileName}\" loaded successfully.");
+                }
+                if (dt.Columns.Count == 0)
+                {
+                    MessageBox.Show($"File \"{dialog.FileName}\" is empty.");
+                }
             }
-            if(dialog.FileName.Length != 0)
-            {
-                MessageBox.Show($"File \"{dialog.FileName}\" loaded successfully.");
-            }
+
+
         }
 
         private void Save_Button_Click(object sender, RoutedEventArgs e)
@@ -67,7 +73,7 @@ namespace CSVReader
             dialog.Filter = "Cursor Files|*.csv";
             if (dialog.ShowDialog() == true)
             {
-                WriteToCSV(dialog.FileName, mainDT);
+                WriteToCSV(dialog.FileName, ds.Tables[0]);
             }
             MessageBox.Show($"File \"{dialog.FileName}\" saved successfully.");
         }
@@ -80,7 +86,8 @@ namespace CSVReader
                 {
                     try
                     {
-                        dt.Clear();
+                        dt.Rows.Clear();
+                        dt.Columns.Clear();
                         string[] headers = sr.ReadLine().Split(splitter);
                         foreach (string header in headers)
                         {
@@ -151,7 +158,6 @@ namespace CSVReader
 
         private void Clear_Button_Click(object sender, RoutedEventArgs e)
         {
-            MainDataGrid.Columns.Clear();
             MainDataGrid.ItemsSource = null;
         }
     }
