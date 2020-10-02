@@ -26,63 +26,70 @@ namespace CSVReader
     public partial class MainWindow : Window
     {
         private char splitter;
-        private string connection;
-        private SqlDataAdapter adapter;
-        DataSet ds = new DataSet();
+        private DataSet ds;
 
         public MainWindow()
         {
             InitializeComponent();
-            splitter = ',';
-            connection = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+            comboBox.SelectedItem = comma;
+            ds = new DataSet();
         }
-
         private void Load_Button_Click(object sender, RoutedEventArgs e)
+        {
+            string filePath = OpenCSVFileDialog();
+            if(filePath != "")
+            {
+                LoadCSV(filePath, ds, MainDataGrid);
+                FileName.Text = filePath;
+            }
+        }
+        private void LoadCSV (string filePath, DataSet ds, DataGrid dg)
+        {
+            DataTable dt = new DataTable();
+            ReadCSV(filePath, dt);
+            if (dt.Columns.Count != 0)
+            {
+                dg.ItemsSource = dt.DefaultView;
+            }
+            ds.Clear();
+            ds.Tables.Add(dt);
+        }
+        private string OpenCSVFileDialog()
         {
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Filter = "Cursor Files|*.csv";
             dialog.Title = "Выберите файл в формате .csv";
-            if(dialog.ShowDialog() == true)
-            {
-                DataTable dt = new DataTable();
-                ds.Tables.Clear();
-                ds.Tables.Add(dt);
-                ReadFromCSV(dialog.FileName, dt);
-                if (dt.Columns.Count != 0)
-                {
-                    MainDataGrid.ItemsSource = ds.Tables[0].DefaultView;
-                    MessageBox.Show($"File \"{dialog.FileName}\" loaded successfully.");
-                }
-                if (dt.Columns.Count == 0)
-                {
-                    MessageBox.Show($"File \"{dialog.FileName}\" is empty.");
-                }
-            }
-
-
+            dialog.ShowDialog();
+            return dialog.FileName;
         }
-
-        private void Save_Button_Click(object sender, RoutedEventArgs e)
+        private string SaveCSVFileDialog()
         {
-            if(MainDataGrid.Columns.Count <= 0)
-            {
-                MessageBox.Show("There is no data to export.");
-                return;
-            }
             SaveFileDialog dialog = new SaveFileDialog();
             dialog.Filter = "Cursor Files|*.csv";
-            if (dialog.ShowDialog() == true)
-            {
-                WriteToCSV(dialog.FileName, ds.Tables[0]);
-            }
-            MessageBox.Show($"File \"{dialog.FileName}\" saved successfully.");
+            dialog.ShowDialog();
+            dialog.Title = "Выберите место сохранения файла";
+            return dialog.FileName;
         }
-
-        private void ReadFromCSV(string filePath, DataTable dt)
+        private void Save_Button_Click(object sender, RoutedEventArgs e)
+        {
+            if(ds.Tables[0].Columns.Count == 0)
+            {
+                MessageBox.Show("Нет данных.");
+                return;
+            }
+            string filePath = SaveCSVFileDialog();
+            if (filePath != "")
+            {
+                WriteCSV(filePath, ds.Tables[0]);
+                FileName.Text = filePath;
+                LoadCSV(filePath, ds, MainDataGrid);
+            }
+        }
+        private void ReadCSV(string filePath, DataTable dt)
         {
             if (filePath.Length != 0)
             {
-                using (StreamReader sr = new StreamReader(filePath, Encoding.Default))
+                using (StreamReader sr = new StreamReader(filePath, Encoding.UTF8))
                 {
                     try
                     {
@@ -111,12 +118,10 @@ namespace CSVReader
                 }
             }
         }
-
-        private void WriteToCSV(string fileName, DataTable dt)
+        private void WriteCSV(string filePath, DataTable dt)
         {
             string temp = "";    
-            //DataView dv = (DataView)MainDataGrid.Items.SourceCollection;
-            using (StreamWriter sw = new StreamWriter(fileName))
+            using (StreamWriter sw = new StreamWriter(filePath))
             {
                 if (dt.Columns.Count > 0)
                 {
@@ -150,15 +155,23 @@ namespace CSVReader
                 }
             }            
         }
-
-        private void DataTableToDB()
-        {
-
-        }
-
         private void Clear_Button_Click(object sender, RoutedEventArgs e)
         {
             MainDataGrid.ItemsSource = null;
+            FileName.Text = "";
+        }
+        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ComboBox comboBox = (ComboBox)sender;
+            TextBlock item = (TextBlock)comboBox.SelectedItem;
+            if (item.Text == "Запятая")
+            {
+                splitter = ',';
+            }
+            else if(item.Text == "Точка с запятой")
+            {
+                splitter = ';';
+            }  
         }
     }
 }

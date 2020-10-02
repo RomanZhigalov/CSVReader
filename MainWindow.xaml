@@ -5,15 +5,21 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CSVReader"
         mc:Ignorable="d"
-        Title="MainWindow" Height="500" Width="400" MinHeight="500" MinWidth="400">
+        Title="CSV Reader" Height="500" Width="400" MinHeight="500" MinWidth="400">
     <Grid>
-        <StackPanel x:Name="stackPanel" Margin="0,0,0,165" Height="320">
+
+        <StackPanel Margin="0,20,0,165" Height="320">
             <DataGrid x:Name="MainDataGrid" Height="320"/>
         </StackPanel>
         <Grid Margin="0,320,0,0">
-            <Button Content="Load CSV" HorizontalAlignment="Right" Margin="0,0,45,0" VerticalAlignment="Center" Height="50" Width="100" Click="Load_Button_Click"/>
-            <Button Content="Save CSV" HorizontalAlignment="Left" Margin="45,0,0,0" VerticalAlignment="Center" Height="50" Width="100" Click="Save_Button_Click"/>
-            <Button Content="Clear" HorizontalAlignment="Right" Margin="0,0,15,15" VerticalAlignment="Bottom" Click="Clear_Button_Click"/>
+            <Button Content="Открыть CSV" HorizontalAlignment="Right" Margin="0,0,45,80" VerticalAlignment="Bottom" Height="50" Width="100" Click="Load_Button_Click"/>
+            <Button Content="Сохранить в CSV" HorizontalAlignment="Left" Margin="45,0,0,80" VerticalAlignment="Bottom" Height="50" Width="100" Click="Save_Button_Click"/>
+            <Button Content="Очитска" HorizontalAlignment="Right" Margin="0,0,15,15" VerticalAlignment="Bottom" Click="Clear_Button_Click"/>
+            <ComboBox Name="comboBox" HorizontalAlignment="Right" Margin="0,0,15,40" VerticalAlignment="Bottom" SelectionChanged="ComboBox_SelectionChanged">
+                <TextBlock x:Name="comma">Запятая</TextBlock>
+                <TextBlock x:Name="semicolon">Точка с запятой</TextBlock>
+            </ComboBox>
+            <TextBlock x:Name="FileName" HorizontalAlignment="Left" Margin="10,0,0,10" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="308"/>
         </Grid>
     </Grid>
 </Window>
